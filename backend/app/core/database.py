@@ -4,7 +4,7 @@ from .config import get_settings
 
 settings = get_settings()
 
-engine = create_async_engine(settings.db_url, echo=True,connect_args={"sslmode": "require"})
+engine = create_async_engine(settings.db_url, echo=True,connect_args={"ssl": True})
 
 SessionLocal = sessionmaker(
     bind=engine,
