@@ -3,7 +3,6 @@ from sqlalchemy import text
 from fastapi.middleware.cors import CORSMiddleware
 from .router import api_router
 from .core.database import SessionLocal
-from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(title="Knowledge Base API")
 
@@ -26,5 +25,3 @@ async def test_db_connection():
     except Exception as e:
           print("❌ Database connection failed!")
           print(e)
-
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
