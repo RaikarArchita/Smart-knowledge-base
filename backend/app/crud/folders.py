@@ -11,13 +11,15 @@ from sqlalchemy.exc import IntegrityError
 
 router = APIRouter()
 
+
 #Create new folder
 @router.post("/create-folder",
              status_code=status.HTTP_201_CREATED)
 async def createFolder(folder_in:FolderCreate,db: AsyncSession = Depends(get_db),
                        current_user: User = Depends(get_current_user)):
 
-    result = await db.execute(select(Folders).where(Folders.name == folder_in.name))
+    result = await db.execute(select(Folders).where(Folders.name == folder_in.name,
+                                                    Folders.user_id == current_user.id))
     if result.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -61,34 +63,26 @@ async def getAllFolders( db: AsyncSession = Depends(get_db),
             root_map[folder.id] = folder
         else:
             children_map.setdefault(folder.parent_id, []).append(folder)
+    print("CHILDREN MAP:", children_map)
+    def build_tree(folder,children_map):
+        children = children_map.get(folder.id,[])
 
-    # Build response manually
-    response = []
+        return {
+            "id": folder.id,
+            "name": folder.name,
+            "parent_id": folder.parent_id,
+            "position": folder.position,
+            "created_at": folder.created_at,
+            "children": [
+                build_tree(child, children_map) for child in children
+            ]
+        }
 
-    for root_id, root in root_map.items():
-        children = children_map.get(root_id, [])
+    return [
+        build_tree(root,children_map)
+        for root in root_map.values()
+    ]
 
-        response.append(
-            FolderTree(
-                id=root.id,
-                name=root.name,
-                parent_id=root.parent_id,
-                position=root.position,
-                created_at=root.created_at,
-                children=[
-                    {
-                        "id": child.id,
-                        "name": child.name,
-                        "parent_id": child.parent_id,
-                        "position": child.position,
-                        "created_at": child.created_at,
-                    }
-                    for child in children
-                ]
-            )
-        )
-
-    return response
 
 # Edit the folder name 
 @router.patch("/rename-folder",status_code=status.HTTP_200_OK)

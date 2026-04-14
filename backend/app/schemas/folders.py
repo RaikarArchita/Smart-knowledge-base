@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel,Field
 from typing import Optional,List
 from uuid import UUID
 from datetime import datetime
@@ -26,7 +26,7 @@ class FolderTree(BaseModel):
     parent_id: Optional[UUID]
     position: int
     created_at: datetime
-    children: List[FolderResponse] = []
+    children: List["FolderTree"] = Field(default_factory=list)
 
     class Config:
         from_attributes = True

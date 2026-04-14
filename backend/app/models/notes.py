@@ -4,6 +4,7 @@ import uuid
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import ForeignKey,String,Text,func,DateTime,Boolean,false
 from datetime import datetime
+from sqlalchemy.ext.associationproxy import association_proxy
 
 class Note(Base):
     __tablename__ = "notes"
@@ -65,3 +66,5 @@ class Note(Base):
 
     user = relationship("User",back_populates="notes")
     folders = relationship("Folders",back_populates="notes")
+    note_tags = relationship("NoteTag",back_populates="notes",passive_deletes=True)
+    tags = association_proxy("note_tags", "tag")
