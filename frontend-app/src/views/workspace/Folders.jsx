@@ -18,6 +18,8 @@ import FormControl from "@mui/material/FormControl";
 import InputAdornment from "@mui/material/InputAdornment";
 import OutlinedInput from "@mui/material/OutlinedInput";
 import CloseSharp from "@mui/icons-material/CloseSharp";
+import { FolderOpenTwoTone } from "@mui/icons-material";
+import { Stack } from "@mui/material";
 
 const NewFolderTextfield = ({ onCreate, onClose, folderName, onChange }) => {
   return (
@@ -86,7 +88,7 @@ const FolderItem = ({ folder, level = 0, onRename, onDelete, onCreate }) => {
   return (
     <>
       <Box
-        sx={{
+        sx={(theme) => ({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -94,42 +96,67 @@ const FolderItem = ({ folder, level = 0, onRename, onDelete, onCreate }) => {
           py: 1,
           mt: isRoot ? 2 : 0,
           bgcolor: folderId == folder.id ? "#e3f2fd" : "transparent",
-          fontWeight: isRoot ? "bold" : "normal",
+          color: folderId == folder.id ? theme.palette.primary.main : "inherit",
+          fontWeight: folderId == folder.id ? 500 : "normal",
           borderRadius: 1,
           cursor: "pointer",
-        }}
+          "&:hover .menu-icon": {
+            opacity: 1,
+          },
+        })}
         onClick={() => {
           if (!isEditing && !isAddingChild) {
             navigate(`/workspace/${folder.id}`);
           }
         }}
       >
-        {isEditing ? (
-          <TextField
-            size="small"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleRenameSave();
-              }
-              if (e.key === "Escape") {
-                setIsEditing(false);
-                setNewName(folder.name);
-              }
-            }}
-            autoFocus
+        <Stack direction="row" alignItems="center" gap={0.6}>
+          <FolderOpenTwoTone
+            sx={(theme) => ({
+              color:
+                folderId == folder.id
+                  ? theme.palette.primary.main
+                  : theme.palette.text.secondary,
+            })}
           />
-        ) : (
-          <Typography variant={isRoot ? "h6" : "body2"}>
-            {folder.name}
-          </Typography>
-        )}
-        <IconButton size="small" onClick={handleMenuOpen}>
+          {isEditing ? (
+            <TextField
+              size="small"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleRenameSave();
+                }
+                if (e.key === "Escape") {
+                  setIsEditing(false);
+                  setNewName(folder.name);
+                }
+              }}
+              autoFocus
+            />
+          ) : (
+            <Typography variant={isRoot ? "h6" : "body2"}>
+              {folder.name}
+            </Typography>
+          )}
+        </Stack>
+        <IconButton
+          size="small"
+          onClick={handleMenuOpen}
+          aria-label="more-options"
+          sx={{ opacity: 0 }}
+          className="menu-icon"
+        >
           <MoreVertOutlined fontSize="small" />
         </IconButton>
 
-        <Menu anchorEl={anchorEl} open={open} onClose={handleMenuClose}>
+        <Menu
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleMenuClose}
+          onClick={(e) => e.stopPropagation()}
+        >
           <MenuItem
             onClick={handleRename}
             sx={{
@@ -254,11 +281,15 @@ const Folders = () => {
         display: "flex",
         flexDirection: "column",
         gap: 3,
-        maxHeight: "86vh",
+        height: "86vh",
       }}
     >
       <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-        <Button sx={{ p: 0 }} onClick={() => setCreateNewFolder(true)}>
+        <Button
+          sx={{ p: 0 }}
+          onClick={() => setCreateNewFolder(true)}
+          aria-label="create_folder"
+        >
           + Create Folder
         </Button>
       </Box>

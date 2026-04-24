@@ -23,6 +23,11 @@ class NoteResponse(BaseModel):
     class Config:
         orm_mode = True
 
+class NoteListResponse(BaseModel):
+    count : int
+    data: List[NoteResponse]
+    available_tags: List[str]
+    
 # Edit a note
 class NoteEdit(BaseModel):
     note_id : UUID

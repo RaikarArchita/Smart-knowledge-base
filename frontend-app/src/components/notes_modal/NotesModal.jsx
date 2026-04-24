@@ -39,6 +39,11 @@ const NotesModal = ({ open, onClose, mode, note, onSubmit }) => {
       onSubmit(null, mode, note?.id);
     } else {
       onSubmit(formData, mode, note?.id);
+      setFormData({
+        title: "",
+        description: "",
+        tags: [],
+      });
     }
     onClose();
   };
@@ -108,6 +113,11 @@ const NotesModal = ({ open, onClose, mode, note, onSubmit }) => {
                 value={formData.description}
                 onChange={handleChange}
                 disabled={isView}
+                sx={{
+                  "& .MuiInputBase-input": {
+                    padding: "5px",
+                  },
+                }}
               />
               {!isView && (
                 <TextField
@@ -122,7 +132,7 @@ const NotesModal = ({ open, onClose, mode, note, onSubmit }) => {
               {formData.tags.length !== 0 && (
                 <Stack direction="row" gap={2} flexWrap="wrap">
                   {formData.tags.map((tag) => (
-                    <Button key={tag} variant="tagsBtn">
+                    <Button key={tag} variant="contained" sx={{px:2,py:1}}>
                       {tag}{" "}
                       {!isView && (
                         <CloseSharp
@@ -141,7 +151,18 @@ const NotesModal = ({ open, onClose, mode, note, onSubmit }) => {
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button
+          onClick={() => {
+            onClose();
+            setFormData({
+              title: "",
+              description: "",
+              tags: [],
+            });
+          }}
+        >
+          Cancel
+        </Button>
         {!isView && (
           <Button
             variant="contained"

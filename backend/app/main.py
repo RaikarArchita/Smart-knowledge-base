@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,Request,HTTPException
 from sqlalchemy import text
 from fastapi.middleware.cors import CORSMiddleware
 from .router import api_router
@@ -17,6 +17,28 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api/v1")
+
+@app.middleware("http")
+async def csrf_protect(request: Request, call_next):
+
+    # ✅ Skip safe methods
+    if request.method in ("GET", "HEAD", "OPTIONS"):
+        return await call_next(request)
+
+    # ✅ Skip login & refresh
+    if any(path in request.url.path for path in ["/login", "/refresh"]):
+        return await call_next(request)
+
+    csrf_cookie = request.cookies.get("csrf_token")
+    csrf_header = request.headers.get("X-CSRF-Token")
+
+    if not csrf_cookie or not csrf_header:
+        raise HTTPException(status_code=403, detail="CSRF missing")
+
+    if csrf_cookie != csrf_header:
+        raise HTTPException(status_code=403, detail="CSRF invalid")
+
+    return await call_next(request)
 
 @app.on_event("startup")
 async def test_db_connection():

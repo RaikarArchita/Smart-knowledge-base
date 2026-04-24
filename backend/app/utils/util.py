@@ -2,10 +2,13 @@ import bcrypt
 from datetime import datetime,timedelta
 from jose import jwt
 from app.core.config import get_settings
+import secrets
 
 settings = get_settings()
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
+ACCESS_EXPIRE_MIN = 15
+REFRESH_EXPIRE_DAYS = 7
 
 def hash_password(password):
     password_bytes = password.encode('utf-8')
@@ -21,7 +24,16 @@ def verify_password(password, hash_from_db):
     return is_correct
 
 def create_access_token(data: dict):
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=30)
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode({**data, "exp": datetime.utcnow() + timedelta(minutes=ACCESS_EXPIRE_MIN)}
+                      ,SECRET_KEY, 
+                      algorithm=ALGORITHM)
+
+def create_refresh_token(data:dict):
+    return jwt.encode(
+        {**data, "exp": datetime.utcnow() + timedelta(days=REFRESH_EXPIRE_DAYS)},
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM,
+    )
+
+def generate_csrf_token():
+    return secrets.token_urlsafe(32)

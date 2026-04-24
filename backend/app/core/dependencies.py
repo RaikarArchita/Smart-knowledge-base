@@ -1,5 +1,5 @@
-from fastapi import Depends, HTTPException, status, Security
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends, HTTPException, status, Security, Request
+from fastapi.security import HTTPBearer
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -13,7 +13,7 @@ settings = get_settings()
 security = HTTPBearer()
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Security(security),
+    request:Request,
     db: AsyncSession = Depends(get_db),
 ):
     credentials_exception = HTTPException(
@@ -21,8 +21,11 @@ async def get_current_user(
         detail="Could not validate credentials",
     )
 
-    token = credentials.credentials
+    token = request.cookies.get("access_token")
 
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
     try:
         payload = jwt.decode(
             token,
@@ -31,9 +34,6 @@ async def get_current_user(
         )
 
         username: str = payload.get("sub")
-
-        if username is None:
-            raise credentials_exception
 
     except JWTError:
         raise credentials_exception

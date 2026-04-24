@@ -10,9 +10,14 @@ import { Link as RouterLink } from "react-router-dom";
 import { useLogin } from "./login.services";
 import { useFormik } from "formik";
 import noteNest from "./../../assets/NoteNest_logo.png";
+import { Divider, IconButton } from "@mui/material";
+import { useState } from "react";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
 const Login = () => {
-  const { mutate } = useLogin();
+  const { mutate, isLoading } = useLogin();
+  const [showPassword, setShowPassword] = useState(false);
 
   const formik = useFormik({
     initialValues: {
@@ -39,32 +44,81 @@ const Login = () => {
 
   return (
     <Box
-      sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        padding: 2,
+        "@keyframes slideUp": {
+          from: {
+            opacity: 0,
+            transform: "translateY(30px)",
+          },
+          to: {
+            opacity: 1,
+            transform: "translateY(0)",
+          },
+        },
+        "@keyframes fadeInScale": {
+          from: {
+            opacity: 0,
+            transform: "scale(0.8)",
+          },
+          to: {
+            opacity: 1,
+            transform: "scale(1)",
+          },
+        },
+      }}
       component="main"
     >
-      <Card variant="outlined" sx={{ margin: "20px", minWidth: 380 }}>
+      <Card
+        variant="outlined"
+        sx={{
+          width: "100%",
+          maxWidth: 420,
+          animation: "slideUp 0.6s ease-out",
+        }}
+      >
         <CardContent>
-          <Box
-            component="img"
-            src={noteNest}
-            alt="NoteNest Logo"
-            sx={{
-              display: "block",
-              width: "100%",
-              maxWidth: 100,
-              height: "auto",
-              marginLeft: "-20px",
-            }}
-          />
-          <Stack spacing={2}>
-            <Typography variant="h6">Sign In</Typography>
+          <Stack spacing={3}>
+            <Box sx={{ textAlign: "center", mb: 1 }}>
+              <Box
+                component="img"
+                src={noteNest}
+                alt="NoteNest Logo"
+                sx={{
+                  width: 100,
+                  height: 100,
+                  animation: "fadeInScale 0.8s ease-out",
+                }}
+              />
+              <Typography variant="h4">NoteNest</Typography>
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                Welcome back! Sign in to continue
+              </Typography>
+            </Box>
+
+            <Divider />
+
+            {/* Sign In Form */}
             <form onSubmit={formik.handleSubmit}>
-              <Stack spacing={2}>
+              <Stack spacing={3}>
+                {/* Username Field */}
                 <Box>
-                  <Typography variant="label">Username</Typography>
+                  <Typography
+                    component="label"
+                    htmlFor="username"
+                    variant="h6"
+                    sx={{ display: "block", mb: 1 }}
+                  >
+                    Username
+                  </Typography>
                   <TextField
                     id="username"
-                    placeholder="jon123"
+                    placeholder="Enter your username"
                     variant="outlined"
                     fullWidth
                     name="username"
@@ -80,51 +134,78 @@ const Login = () => {
                   />
                 </Box>
                 <Box>
-                  <Typography variant="label">Password</Typography>
-                  <TextField
-                    id="password"
-                    placeholder="••••••••"
-                    variant="outlined"
-                    fullWidth
-                    type="password"
-                    name="password"
-                    value={formik.values.password}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    error={
-                      formik.touched.password && Boolean(formik.errors.password)
-                    }
-                    helperText={
-                      formik.touched.password && formik.errors.password
-                    }
-                  />
+                  <Typography component="label" htmlFor="password" variant="h6">
+                    Password
+                  </Typography>
+                  <Box sx={{ position: "relative" }}>
+                    <TextField
+                      id="password"
+                      placeholder="••••••••"
+                      variant="outlined"
+                      fullWidth
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={formik.values.password}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      error={
+                        formik.touched.password &&
+                        Boolean(formik.errors.password)
+                      }
+                      helperText={
+                        formik.touched.password && formik.errors.password
+                      }
+                    />
+                    <IconButton
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                      sx={{
+                        position: "absolute",
+                        right: 1,
+                        top: "50%",
+                        transform: "translate(-20%,-50%)",
+                      }}
+                    >
+                      {showPassword ? (
+                        <VisibilityOffIcon sx={{ fontSize: 20 }} />
+                      ) : (
+                        <VisibilityIcon sx={{ fontSize: 20 }} />
+                      )}
+                    </IconButton>
+                  </Box>
                 </Box>
-                <Button type="submit" variant="contained" color="primary">
-                  Sign In
+                {/* Sign In Button */}
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={isLoading}
+                  sx={{
+                    background:
+                      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  }}
+                >
+                  {isLoading ? (
+                    <CircularProgress size={20} sx={{ color: "#fff" }} />
+                  ) : (
+                    "Sign In"
+                  )}
                 </Button>
               </Stack>
             </form>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              textAlign="center"
-            >
-              Not Registered?{" "}
-              <Link
-                component={RouterLink}
-                to="/register"
-                underline="none"
-                sx={{
-                  fontWeight: 600,
-                  color: "primary.main",
-                  "&:hover": {
-                    textDecoration: "underline",
-                  },
-                }}
-              >
-                Sign up
-              </Link>
-            </Typography>
+
+            {/* Sign Up Link */}
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="body2">
+                Not registered?{" "}
+                <Link
+                  component={RouterLink}
+                  to="/register"
+                  sx={{ fontWeight: 700 }}
+                >
+                  Create an account
+                </Link>
+              </Typography>
+            </Box>
           </Stack>
         </CardContent>
       </Card>

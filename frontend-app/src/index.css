@@ -113,3 +113,24 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+/* width */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+/* track */
+::-webkit-scrollbar-track {
+  background: #695cdb27;
+}
+
+/* handle */
+::-webkit-scrollbar-thumb {
+  background:#685cdb;
+  border-radius: 10px;
+}
+
+/* handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #685cdb;
+}

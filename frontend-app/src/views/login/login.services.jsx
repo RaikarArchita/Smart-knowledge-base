@@ -1,17 +1,16 @@
 import {useMutation} from "@tanstack/react-query"
-import axios from "axios"
 import { useNavigate } from "react-router-dom"
+import axiosInstance from "../../utils/axiosInstance"
 
 export const useLogin = () => {
     const navigate = useNavigate()
 
     return useMutation({
         mutationFn: async (data) =>   {
-            const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/user/login`,data)
+            const response = await axiosInstance.post('/user/login',data)
             return response.data
         },
-        onSuccess:(data)=>{
-            localStorage.setItem('accessToken',data.access_token)
+        onSuccess:()=>{
             navigate('/dashboard')
         },
         onError:(error) =>{

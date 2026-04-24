@@ -1,27 +1,59 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "../../utils/axiosInstance";
 
-export const useGetNotes = () => {
-  return useMutation({
-    mutationFn: async (folderId) => {
-      const response = await axiosInstance.get(
-        `${import.meta.env.VITE_API_BASE_URL}/notes/get-notes/${folderId}`,
-      );
-      return response.data;
-    },
-    onError: (err) => {
-      return err;
-    },
+const fetchNotes = async ({ folderId, page, limit, title, tags ,sortBy, sortOrder }) => {
+  const params = new URLSearchParams();
+
+  params.append("page", page);
+  params.append("limit", limit);
+  params.append("sortBy", sortBy);
+  params.append("sortOrder", sortOrder);
+
+  if (title?.trim()) {
+    params.append("title", title);
+  }
+
+  if (tags?.length) {
+    tags.forEach((tag) => params.append("tags", tag)); 
+  }
+
+  const res = await axiosInstance.get(`/notes/get-notes/${folderId}`, {
+    params,
+  });
+
+  return res.data;
+};
+
+export const useGetNotes = ({ folderId, page, limit = 10, title, tags ,sortOrder, sortBy}) => {
+  return useQuery({
+    queryKey: ["notes", folderId, page, title, tags, sortBy, sortOrder],
+    queryFn: () =>
+      fetchNotes({
+        folderId,
+        page,
+        limit,
+        title,
+        tags,
+        sortBy,
+        sortOrder
+      }),
+    enabled: !!folderId,
+    keepPreviousData: true,
+    staleTime: 1000 * 60 * 5, // cache for 5 mins
   });
 };
 
 export const useCreateNote = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload) => {
-      const response = await axiosInstance.post(
-        `${import.meta.env.VITE_API_BASE_URL}/notes/create-note`,payload
-      );
+      const response = await axiosInstance.post(`/notes/create-note`, payload);
       return response.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["notes", variables.folder_id],
+      });
     },
     onError: (err) => {
       return err;
@@ -30,12 +62,16 @@ export const useCreateNote = () => {
 };
 
 export const useEditNote = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload) => {
-      const response = await axiosInstance.patch(
-        `${import.meta.env.VITE_API_BASE_URL}/notes/edit-note`,payload
-      );
+      const response = await axiosInstance.patch(`/notes/edit-note`, payload);
       return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["notes"],
+      });
     },
     onError: (err) => {
       return err;
@@ -44,12 +80,18 @@ export const useEditNote = () => {
 };
 
 export const useDeleteNote = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (noteId) => {
       const response = await axiosInstance.delete(
-        `${import.meta.env.VITE_API_BASE_URL}/notes/delete-note/${noteId}`
+        `/notes/delete-note/${noteId}`,
       );
       return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["notes"],
+      });
     },
     onError: (err) => {
       return err;

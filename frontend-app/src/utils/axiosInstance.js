@@ -1,34 +1,52 @@
 import axios from "axios";
 
-const axiosInstance = axios.create({
-    headers:{
-        'Content-Type':"application/json"
-    }
-})
+function getCSRFToken() {
+  return document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("csrf_token="))
+    ?.split("=")[1];
+}
 
-axiosInstance.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('accessToken')
-        if(token){
-            config.headers.Authorization = `Bearer ${token}`
-        }
-        return config
-    },
-    (error) => {
-        return Promise.reject(error)
-    }
-)
+const axiosInstance = axios.create({
+  baseURL: '/api/v1',
+  withCredentials: true,
+});
+
+axiosInstance.interceptors.request.use((config) => {
+  const csrfToken = getCSRFToken();
+
+  if (csrfToken) {
+    config.headers["X-CSRF-Token"] = csrfToken;
+  }
+
+  return config;
+});
 
 axiosInstance.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if(error.response?.status === 403 || error.response?.status === 401){
-            localStorage.removeItem('accessToken')
-            window.location.hash = '/sign-in'
-        }
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
 
-        return Promise.reject(error)
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes("/login") &&
+      !originalRequest.url.includes("/refresh")
+    ) {
+      originalRequest._retry = true;
+
+      try {
+        await axiosInstance.post("/user/refresh");
+        return axiosInstance(originalRequest);
+      } catch (refreshError) {
+        window.location.href = "/sign-in";
+        return Promise.reject(refreshError);
+      }
     }
-)
 
-export default axiosInstance
+    return Promise.reject(error);
+  }
+);
+
+
+export default axiosInstance;

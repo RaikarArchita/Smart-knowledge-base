@@ -1,5 +1,5 @@
-from fastapi import APIRouter,status,Depends,HTTPException
-from app.schemas.notes import NoteResponse,NoteCreate,NoteEdit
+from fastapi import APIRouter,status,Depends,HTTPException,Query
+from app.schemas.notes import NoteResponse,NoteCreate,NoteEdit,NoteListResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.models.user import User
@@ -7,27 +7,90 @@ from app.models.notes import Note
 from app.models.tags import Tag
 from app.models.notes_tags import NoteTag
 from app.core.dependencies import get_current_user
-from sqlalchemy import select,delete
-from sqlalchemy.exc import IntegrityError
-from typing import List
+from sqlalchemy import select,delete,desc,func,and_,asc
+from typing import Optional,List
 from sqlalchemy.orm import selectinload
+from enum import Enum
 
 router = APIRouter()
 
+class SortBy(str,Enum):
+    created_at = "created_at"
+    title = "title"
+
+class SortOrder(str, Enum):
+    asc = "asc"
+    desc = "desc"
+
 @router.get("/get-notes/{folder_id}",status_code=status.HTTP_200_OK,
-            response_model=List[NoteResponse])
+            response_model=NoteListResponse)
 async def getAllNotes(folder_id:str,
-                         db:AsyncSession=Depends(get_db),
-                     current_user:User=Depends(get_current_user)):
+                        page: int = Query(1, ge=1), 
+                        limit: int = Query(10, ge=1, le=100),
+                        title: Optional[str] = Query(None),
+                        tags : Optional[List[str]] = Query(None),
+                        sortBy : SortBy = Query(SortBy.created_at),
+                        sortOrder : SortOrder = Query(SortOrder.desc),
+                        db:AsyncSession=Depends(get_db),
+                        current_user:User=Depends(get_current_user)):
+        
+        offset = (page - 1) * limit
+        filters = [
+                Note.folder_id == folder_id,
+                Note.user_id == current_user.id
+        ]
+
+        if title and title.strip():
+            filters.append(Note.title.ilike(f"%{title}%"))
+
         stmt = (
                 select(Note)
                 .options(selectinload(Note.note_tags).selectinload(NoteTag.tag))
-                .where(Note.folder_id == folder_id,
-                    Note.user_id == current_user.id)
+                .where(and_(*filters))
             )
         
+        if tags:
+            stmt = stmt.join(Note.note_tags).join(NoteTag.tag).where(
+            Tag.name.in_(tags)
+        )
+        
+        sort_column = getattr(Note, sortBy.value)
+
+        if sortOrder == SortOrder.asc:
+             order_clause = asc(sort_column)
+        else:
+            order_clause = desc(sort_column)
+
+        stmt = stmt.distinct()
+        stmt = stmt.order_by(order_clause).offset(offset).limit(limit)
+
         result = await db.execute(stmt)
         notes = result.scalars().all()
+
+        count_stmt = (
+                select(func.count(func.distinct(Note.id)))
+                .where(and_(*filters)))
+
+        if tags:
+            count_stmt = count_stmt.join(Note.note_tags).join(NoteTag.tag).where(
+                Tag.name.in_(tags)
+            )
+
+        total = (await db.execute(count_stmt)).scalar()
+
+        tags_stmt = (
+            select(Tag.name)
+            .join(NoteTag)
+            .join(Note)
+            .where(
+                Note.folder_id == folder_id,
+                Note.user_id == current_user.id
+            )
+            .distinct()
+            .order_by(Tag.name)
+        )
+        tag_result = await db.execute(tags_stmt)
+        available_tags = tag_result.scalars().all()
 
         response = []
 
@@ -42,7 +105,11 @@ async def getAllNotes(folder_id:str,
                 "tags": [tag.name for tag in note.tags]
             })
 
-        return response
+        return {
+            "count":total,
+            "data":response,
+            "available_tags": available_tags
+        }
 
 @router.post("/create-note",status_code=status.HTTP_201_CREATED,
              response_model=NoteResponse)

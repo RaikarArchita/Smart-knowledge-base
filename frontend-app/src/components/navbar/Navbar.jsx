@@ -8,6 +8,9 @@ import Button from "@mui/material/Button";
 import { Link, useLocation } from "react-router-dom";
 import { alpha } from "@mui/material/styles";
 import HomeFilled from "@mui/icons-material/HomeFilled";
+import { useState } from "react";
+import { Menu, MenuItem } from "@mui/material";
+import { useLogout } from "./navbar.services";
 
 const Navbar = () => {
   const navItems = [
@@ -15,12 +18,30 @@ const Navbar = () => {
     { label: "Workspace", path: "/workspace" },
   ];
   const location = useLocation();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+
+  const { mutate } = useLogout();
+
+  const handleMenuOpen = (event) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
 
   return (
     <AppBar position="static">
       <Toolbar>
         <Stack direction="row" spacing={4} sx={{ flexGrow: 1 }}>
-          <Button component={Link} to="/dashboard" color="inherit">
+          <Button
+            component={Link}
+            to="/dashboard"
+            color="inherit"
+            aria-label="Go to dashboard"
+          >
             <HomeFilled />
           </Button>
           <Box sx={{ display: "flex", gap: 2 }}>
@@ -44,6 +65,7 @@ const Navbar = () => {
                       ),
                     },
                   })}
+                  aria-label={`${item.label}`}
                 >
                   {item.label}
                 </Button>
@@ -54,12 +76,40 @@ const Navbar = () => {
         <IconButton
           size="large"
           edge="start"
-          color="inherit"
-          aria-label="menu"
-          sx={{ mr: 1 }}
+          aria-label="Open user menu"
+          aria-controls={open ? "user-menu" : undefined}
+          aria-haspopup="true"
+          aria-expanded={open ? "true" : undefined}
+          sx={{ mr: 1, color: "white" }}
+          onClick={handleMenuOpen}
         >
           <AccountCircle />
         </IconButton>
+        <Menu
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleMenuClose}
+          id="user-menu"
+        >
+          <MenuItem
+            sx={{
+              fontSize: "0.9rem",
+            }}
+          >
+            Profile
+          </MenuItem>
+          <MenuItem
+            sx={{
+              fontSize: "0.9rem",
+            }}
+            onClick={() => {
+              handleMenuClose();
+              mutate();
+            }}
+          >
+            Logout
+          </MenuItem>
+        </Menu>
       </Toolbar>
     </AppBar>
   );
