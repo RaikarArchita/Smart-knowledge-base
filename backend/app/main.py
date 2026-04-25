@@ -5,6 +5,7 @@ from .router import api_router
 from .core.database import SessionLocal
 import os
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 
 app = FastAPI(title="Knowledge Base API")
 
@@ -17,6 +18,15 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api/v1")
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request:Request,exc:HTTPException):
+     return JSONResponse(
+          status_code=exc.status_code,
+          content={
+            "message": exc.detail
+        }
+     )
 
 @app.middleware("http")
 async def csrf_protect(request: Request, call_next):

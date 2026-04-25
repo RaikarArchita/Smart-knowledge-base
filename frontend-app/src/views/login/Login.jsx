@@ -16,7 +16,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
 const Login = () => {
-  const { mutate, isLoading } = useLogin();
+  const { mutate, isLoading, isError, error, reset } = useLogin();
   const [showPassword, setShowPassword] = useState(false);
 
   const formik = useFormik({
@@ -34,7 +34,7 @@ const Login = () => {
       if (!values.password) {
         errors.password = "Password is required";
       }
-
+      reset()
       return errors;
     },
     onSubmit: (values) => {
@@ -174,6 +174,11 @@ const Login = () => {
                     </IconButton>
                   </Box>
                 </Box>
+                {isError && (
+                  <Typography variant="h6" color="error" textAlign="center">
+                    {error}
+                  </Typography>
+                )}
                 {/* Sign In Button */}
                 <Button
                   type="submit"
