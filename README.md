@@ -28,11 +28,11 @@ Database
 PostgreSQL
 
 ⚙️ Installation
-1️⃣ Clone the Repository
+Clone the Repository
 git clone https://github.com/your-username/smart-knowledge-base.git
 cd smart-knowledge-base
 
-Frontend Setup (React)
+⚙️ Frontend Setup (React)
 cd frontend-app
 npm install
 npm run dev
