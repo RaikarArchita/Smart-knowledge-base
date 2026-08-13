@@ -36,7 +36,7 @@ async def csrf_protect(request: Request, call_next):
         return await call_next(request)
 
     # ✅ Skip login & refresh
-    if any(path in request.url.path for path in ["/login", "/refresh"]):
+    if any(path in request.url.path for path in ["/login", "/refresh","/register","/ai/suggest-tags"]):
         return await call_next(request)
 
     csrf_cookie = request.cookies.get("csrf_token")

@@ -286,8 +286,8 @@ const Folders = () => {
     >
       <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
         <Button
-          sx={{ p: 0 }}
-          onClick={() => setCreateNewFolder(true)}
+          sx={{ p: 1 }}
+          onClick={() => {setCreateNewFolder(!isCreateNewFolder); setFolderName("");}}
           aria-label="create_folder"
         >
           + Create Folder

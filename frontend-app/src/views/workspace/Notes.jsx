@@ -277,7 +277,7 @@ const Notes = () => {
                   setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"))
                 }
                 aria-label="Sort Order"
-                sx={{ ml: -4 }}
+                sx={{ ml: -2}}
               >
                 {sortOrder === "asc" ? (
                   <ArrowUpwardSharp sx={{ fontSize: "1.4rem" }} />
@@ -287,7 +287,7 @@ const Notes = () => {
               </Button>
             </Stack>
             <Button
-              sx={{ p: 0 }}
+              sx={{ p: 1 }}
               onClick={() => handleOpen(NOTE_MODAL_MODE.ADD)}
               aria-label="create_note"
             >

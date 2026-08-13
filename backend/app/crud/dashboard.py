@@ -105,7 +105,7 @@ async def dashboardDetails(db:AsyncSession=Depends(get_db),
     return {
             "total_notes": data.total_notes,
             "no_of_folders": folder_count ,
-            "avg_note_len" : round(data.avg_length),
+            "avg_note_len" : round(data.avg_length or 0),
             "active_today": data.active_today,
             "recent_activites": recent_activites,
             "top_tags":[ {"id": row.id, "name": row.name, "count": row.usage_count} for row in top_tags],
