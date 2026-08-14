@@ -10,7 +10,7 @@ else:
     engine = create_async_engine(
         settings.db_url,
         echo=True,
-        connect_args={"ssl": True}
+        connect_args={"ssl": "require"}
     )
 
 SessionLocal = sessionmaker(
